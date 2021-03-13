@@ -56,6 +56,10 @@ data$education = gsub(' Assoc-acdm', 'Assoc', data$education)
 data$education = factor(data$education)
 data$education = ordered(data$education, levels = c(' Preschool','Elementary School','Middle School','High School',' HS-grad',' Prof-school','Assoc','Unfinnished College',' Bachelors',' Masters',' Doctorate'))  
 
+# Modification of 'race'
+data$race = gsub(' Amer-Indian-Eskimo', 'Ind-Eskimo', data$race)
+data$race = gsub(' Asian-Pac-Islander', 'Asian-Pac', data$race)
+
 label_choice = unique(data$label)
 
 
@@ -93,7 +97,7 @@ ui = navbarPage(
              fluidPage(
                  p('Check yourself the data in the nest interactive charts.'),
                  awesomeCheckboxGroup(
-                     inputId = 'label',
+                     inputId = 'label_sel',
                      label = 'Select the populations to show',
                      choices = label_choice,
                      selected = label_choice,
@@ -109,6 +113,8 @@ ui = navbarPage(
                                                Therefore, it is better to display it through a kernel density distribution.')))
                              ),#sidebarPanel
                              mainPanel(
+                                 br(),
+                                 plotOutput('AgePlot')
                              )#mainPanel
                          )#sidebarLayout
                      ), #Age
@@ -119,6 +125,8 @@ ui = navbarPage(
                                                Therefore, it is better to display it through a kernel density distribution.')))
                               ),#sidebarPanel
                               mainPanel(
+                                  br(),
+                                  plotOutput('WorkPlot')
                               )#mainPanel
                          )#sidebarLayout
                      ), #Workclass
@@ -129,6 +137,8 @@ ui = navbarPage(
                                                Therefore, it is better to display it through a kernel density distribution.')))
                               ),#sidebarPanel
                               mainPanel(
+                                  br(),
+                                  plotOutput('EdPlot')
                               )#mainPanel
                          )#sidebarLayout
                      ), #Workclass
@@ -139,6 +149,8 @@ ui = navbarPage(
                                                Therefore, it is better to display it through a kernel density distribution.')))
                               ),#sidebarPanel
                               mainPanel(
+                                  br(),
+                                  plotOutput('RacePlot')
                               )#mainPanel
                          )#sidebarLayout
                      ), #Race
@@ -149,6 +161,8 @@ ui = navbarPage(
                                                Therefore, it is better to display it through a kernel density distribution.')))
                               ),#sidebarPanel
                               mainPanel(
+                                  br(),
+                                  plotOutput('SexPlot')
                               )#mainPanel
                          )#sidebarLayout
                      ), #Race
@@ -159,6 +173,8 @@ ui = navbarPage(
                                                Therefore, it is better to display it through a kernel density distribution.')))
                               ),#sidebarPanel
                               mainPanel(
+                                  br(),
+                                  plotOutput('HoursPlot')
                               )#mainPanel
                         )#sidebarLayout
                     ) #HoursWeek
@@ -169,7 +185,72 @@ ui = navbarPage(
 
 # Define server logic required to draw a histogram
 server = function(input, output) {
-
+    # Selector of populations in Variable Plots
+    labelSelection = reactive({data %>%
+            filter(label %in% input$label_sel)})
+    
+    # Variable Plot Renderers
+    output$AgePlot = renderPlot(
+        labelSelection() %>%
+            ggplot(aes(age, fill = label)) +
+            geom_density(alpha = 0.5, kernel = "gaussian") +
+            geom_vline(aes(xintercept = mean(age)), linetype = 2)+
+            scale_fill_discrete(name = "Label")+
+            scale_fill_manual(values = c("#00AFBB", "#E7B800")) +
+            theme_minimal()+
+            labs(title = "Age density plot by label", x = 'Age of Individual', y = 'Density')
+    ) #AgePlot
+    
+    output$HoursPlot = renderPlot(
+        labelSelection() %>%
+            ggplot(aes(hours_week, fill = label)) +
+            geom_density(alpha = 0.5, kernel = "gaussian") +
+            geom_vline(aes(xintercept = mean(age)), linetype = 2)+
+            scale_fill_discrete(name = "Label")+
+            theme_minimal()+
+            labs(title = "Hour per Week density plot by label", x = 'Hours/Week Worked', y = 'Density')
+    ) #HoursPlot
+    
+    output$EdPlot = renderPlot(
+        labelSelection() %>%
+            ggplot(aes(x=education, fill=label)) +
+            geom_bar(stat="count", width=0.7) +
+            theme_minimal()+
+            theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
+            values = c("#00AFBB", "#E7B800", "#FC4E07") +
+            scale_fill_discrete(name = "Label")+
+            labs(title = "Education barplot by label" , x = 'Hours/Week Worked', y = 'Density')
+    ) #EdPlot
+    
+    output$WorkPlot = renderPlot(
+        labelSelection() %>%
+            ggplot(aes(x=workclass, fill=label)) +
+            geom_bar(stat="count", width=0.7) +
+            theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
+            scale_fill_discrete(name = "Label")+
+            theme_minimal()+
+            labs(title = "Workclass barplot by label" , x = 'Hours/Week Worked', y = 'Density')
+    ) #WorkPlot
+    
+    output$SexPlot = renderPlot(
+        labelSelection() %>%
+            ggplot(aes(x=sex, fill=label)) +
+            geom_bar(stat="count", width=0.7) +
+            theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
+            scale_fill_discrete(name = "Label") +
+            theme_minimal() +
+            labs(title = "Sex barplot by label" , x = 'Hours/Week Worked', y = 'Density')
+    ) #SexPlot
+    
+    output$RacePlot = renderPlot(
+        labelSelection() %>%
+            ggplot(aes(x=race, fill=label)) +
+            geom_bar(stat="count", width=0.7) +
+            theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
+            scale_fill_discrete(name = "Label")+
+            theme_minimal()+
+            labs(title = "Race barplot by label" , x = 'Hours/Week Worked', y = 'Density')
+    ) #RacePlot
 }
 
 # Run the application 
