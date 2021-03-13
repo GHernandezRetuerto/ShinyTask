@@ -4,8 +4,10 @@ require(bslib)
 require(ggplot2)
 require(plotly)
 require(thematic)
+require(DT)
+require(shinyWidgets)
 
-data =  read.csv(url('https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'), header=FALSE)
+data =  read.csv(url('https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'), header=FALSE, stringsAsFactors = TRUE)
 colnames(data) = c('age','workclass','fnlwgt','education','education_num','marital_status','occupation','relationship','race','sex','cap_gain','cap_loss','hours_week','native_country','label')
 
 # Some cleaning and selection of variables
@@ -22,8 +24,6 @@ if (sum(sapply(data, NAcount)) != 0){cat('ERROR: NAs detected.')}
 library(caret)
 part = createDataPartition(data$label, p=0.3, list=FALSE)
 data = data[part,]
-nrow(data)
-
 
 # Define UI for application that draws a histogram
 # Define UI
@@ -37,39 +37,91 @@ ui = navbarPage(
     # First Page 
     tabPanel('Introduction',
              fluidPage(
+                 img(src="uc3mLogo.jpg", align='right'),
                  h1('Shiny App'),
-                 h2('By Guillermo Hernandez - Data Tidying 2021'),
-                 br(),
-                 p(''),
-                 br(),
-                 p(''),
-                 a(href="https://archive.ics.uci.edu/ml/datasets/Adult", "UCI Repository - Adult Income Dataset"),
+                 h4('By Guillermo Hernandez - Data Tidying 2021'),
                  br(),
                  br(),
-                 h2(''),
                  br(),
-                 p(''),
+                 p('This is a Shiny App made for Data Tyding, a subject of the Msc in Statistics for Data Science.\n'),
                  br(),
-                 img(src="uc3mLogo.jpg", align='right')
+                 p('All the information related with the functioning of the app can be found in the next tab.')
              )#fluidPage
-             
-             
+    ),#tabPanel
+    
+    tabPanel('Guide',
+        fluidPage(
+            includeMarkdown("guide.md")
+        ) #fluidPage
     ),#tabPanel
     
     tabPanel("The Variables",
              fluidPage(
-                 titlePanel(),
+                 p('Check yourself the data in the nest interactive charts.'),
+                 prettySwitch(inputId = 'label0', label='  Show <50K Observations'),
+                 prettySwitch(inputId = 'label1', label='  Show >50K Observations'),
                  tabsetPanel(
-                     tabPanel(
+                     tabPanel('Age',
                          sidebarLayout(
                              sidebarPanel(
-                                 p('')
+                                 p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
+                                               Therefore, it is better to display it through a kernel density distribution.')))
                              ),#sidebarPanel
                              mainPanel(
                              )#mainPanel
                          )#sidebarLayout
-                     ) #tabPanel
-                 ) #titlePanel
+                     ), #Age
+                     tabPanel('Workclass',
+                          sidebarLayout(
+                              sidebarPanel(
+                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
+                                               Therefore, it is better to display it through a kernel density distribution.')))
+                              ),#sidebarPanel
+                              mainPanel(
+                              )#mainPanel
+                         )#sidebarLayout
+                     ), #Workclass
+                     tabPanel('Education',
+                          sidebarLayout(
+                              sidebarPanel(
+                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
+                                               Therefore, it is better to display it through a kernel density distribution.')))
+                              ),#sidebarPanel
+                              mainPanel(
+                              )#mainPanel
+                         )#sidebarLayout
+                     ), #Workclass
+                     tabPanel('Race',
+                          sidebarLayout(
+                              sidebarPanel(
+                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
+                                               Therefore, it is better to display it through a kernel density distribution.')))
+                              ),#sidebarPanel
+                              mainPanel(
+                              )#mainPanel
+                         )#sidebarLayout
+                     ), #Race
+                     tabPanel('Sex',
+                          sidebarLayout(
+                              sidebarPanel(
+                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
+                                               Therefore, it is better to display it through a kernel density distribution.')))
+                              ),#sidebarPanel
+                              mainPanel(
+                              )#mainPanel
+                         )#sidebarLayout
+                     ), #Race
+                     tabPanel('Hours per Week',
+                          sidebarLayout(
+                              sidebarPanel(
+                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
+                                               Therefore, it is better to display it through a kernel density distribution.')))
+                              ),#sidebarPanel
+                              mainPanel(
+                              )#mainPanel
+                        )#sidebarLayout
+                    ) #HoursWeek
+                 ) #tabsetPanel
              )#fluidPage    
     )#tabPanel
 )#navbarPage
