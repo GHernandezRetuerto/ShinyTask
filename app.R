@@ -110,7 +110,9 @@ ui = navbarPage(
                          sidebarLayout(
                              sidebarPanel(
                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
-                                               Therefore, it is better to display it through a kernel density distribution.')))
+                                               Therefore, it is a good option to display it through a kernel density distribution.'))),
+                                 p('There is a clearly higher chance an individual gets a high anual income as it gets older.
+                                    The reason why this might happen is the promotions and the improvement of the work status.')
                              ),#sidebarPanel
                              mainPanel(
                                  br(),
@@ -121,8 +123,10 @@ ui = navbarPage(
                      tabPanel('Workclass',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
-                                               Therefore, it is better to display it through a kernel density distribution.')))
+                                  p(HTML(paste0(tags$code('Age'), 'is a factor.
+                                               Therefore, it is reasonable to use barplots to show it.'))),
+                                  p('Differences between groups do not seem that marked. 
+                                    Further analysis show that this variable is not that useful itself to distinguish the income.')
                               ),#sidebarPanel
                               mainPanel(
                                   br(),
@@ -133,8 +137,9 @@ ui = navbarPage(
                      tabPanel('Education',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
-                                               Therefore, it is better to display it through a kernel density distribution.')))
+                                  p(HTML(paste0(tags$code('Education'), 'is a factor.
+                                               Therefore, it is reasonable to use barplots to show it.'))),
+                                  p('Superior studies (specially from college up) increase the proportion of individuals with high incomes.')
                               ),#sidebarPanel
                               mainPanel(
                                   br(),
@@ -145,8 +150,10 @@ ui = navbarPage(
                      tabPanel('Race',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
-                                               Therefore, it is better to display it through a kernel density distribution.')))
+                                  p(HTML(paste0(tags$code('Age'), 'is a factor.
+                                               Therefore, it is reasonable to use barplots to show it.'))),
+                                  p('There is a great imbalance in sample size between classes. 
+                                    However, it can be seen that white people are more likely to have high incomes.')
                               ),#sidebarPanel
                               mainPanel(
                                   br(),
@@ -157,8 +164,10 @@ ui = navbarPage(
                      tabPanel('Sex',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
-                                               Therefore, it is better to display it through a kernel density distribution.')))
+                                  p(HTML(paste0(tags$code('Age'), 'is a (dichotomic) factor.
+                                               Therefore, it is reasonable to use barplots to show it.'))),
+                                  p('The salary abysm between males and females becomes clear in this chart.
+                                    Women tend to occupy lower-rank positions in companies, which might partially explain this phenomenon.')
                               ),#sidebarPanel
                               mainPanel(
                                   br(),
@@ -170,7 +179,8 @@ ui = navbarPage(
                           sidebarLayout(
                               sidebarPanel(
                                   p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
-                                               Therefore, it is better to display it through a kernel density distribution.')))
+                                               Therefore, it is better to display it through a kernel density distribution.'))),
+                                  
                               ),#sidebarPanel
                               mainPanel(
                                   br(),
@@ -195,8 +205,7 @@ server = function(input, output) {
             ggplot(aes(age, fill = label)) +
             geom_density(alpha = 0.5, kernel = "gaussian") +
             geom_vline(aes(xintercept = mean(age)), linetype = 2)+
-            scale_fill_discrete(name = "Label")+
-            scale_fill_manual(values = c("#00AFBB", "#E7B800")) +
+            scale_fill_manual(name = "Label", values = c("firebrick3", "dodgerblue3")) +
             theme_minimal()+
             labs(title = "Age density plot by label", x = 'Age of Individual', y = 'Density')
     ) #AgePlot
@@ -206,7 +215,7 @@ server = function(input, output) {
             ggplot(aes(hours_week, fill = label)) +
             geom_density(alpha = 0.5, kernel = "gaussian") +
             geom_vline(aes(xintercept = mean(age)), linetype = 2)+
-            scale_fill_discrete(name = "Label")+
+            scale_fill_manual(name = "Label", values = c("firebrick3", "dodgerblue3")) +
             theme_minimal()+
             labs(title = "Hour per Week density plot by label", x = 'Hours/Week Worked', y = 'Density')
     ) #HoursPlot
@@ -217,8 +226,7 @@ server = function(input, output) {
             geom_bar(stat="count", width=0.7) +
             theme_minimal()+
             theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
-            values = c("#00AFBB", "#E7B800", "#FC4E07") +
-            scale_fill_discrete(name = "Label")+
+            scale_fill_manual(name = "Label", values = c("firebrick3", "dodgerblue3")) +
             labs(title = "Education barplot by label" , x = 'Hours/Week Worked', y = 'Density')
     ) #EdPlot
     
@@ -227,7 +235,7 @@ server = function(input, output) {
             ggplot(aes(x=workclass, fill=label)) +
             geom_bar(stat="count", width=0.7) +
             theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
-            scale_fill_discrete(name = "Label")+
+            scale_fill_manual(name = "Label", values = c("firebrick3", "dodgerblue3")) +
             theme_minimal()+
             labs(title = "Workclass barplot by label" , x = 'Hours/Week Worked', y = 'Density')
     ) #WorkPlot
@@ -237,7 +245,7 @@ server = function(input, output) {
             ggplot(aes(x=sex, fill=label)) +
             geom_bar(stat="count", width=0.7) +
             theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
-            scale_fill_discrete(name = "Label") +
+            scale_fill_manual(name = "Label", values = c("firebrick3", "dodgerblue3")) +
             theme_minimal() +
             labs(title = "Sex barplot by label" , x = 'Hours/Week Worked', y = 'Density')
     ) #SexPlot
@@ -247,7 +255,7 @@ server = function(input, output) {
             ggplot(aes(x=race, fill=label)) +
             geom_bar(stat="count", width=0.7) +
             theme(axis.text.x = element_text(angle = 45, vjust=1, hjust = 1)) +
-            scale_fill_discrete(name = "Label")+
+            scale_fill_manual(name = "Label", values = c("firebrick3", "dodgerblue3")) +
             theme_minimal()+
             labs(title = "Race barplot by label" , x = 'Hours/Week Worked', y = 'Density')
     ) #RacePlot
