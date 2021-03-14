@@ -20,7 +20,7 @@ data = data[complete.cases(data), ] %>% # Only data without NA
     select(age, workclass, education, race, sex, hours_week, label) %>%
     na.omit()
 
-# Eliminating rows with ' ?' valuesstr
+# Eliminating rows with ' ?' values
 data = data[rowSums(data == " ?") == 0, , drop = FALSE]
 
 # Checking the presence of NAs
@@ -60,8 +60,17 @@ data$education = ordered(data$education, levels = c(' Preschool','Elementary Sch
 data$race = gsub(' Amer-Indian-Eskimo', 'Ind-Eskimo', data$race)
 data$race = gsub(' Asian-Pac-Islander', 'Asian-Pac', data$race)
 
-label_choice = unique(data$label)
+# RF Model for income prediction
+rfModel = readRDS('www\\rfModel.rds')
 
+# Choice vectors
+label_choice = unique(data$label)
+age_choice = c(15,25,35,45,55,65,75,90)
+hours_choice = c(10, 20, 30, 40, 60, 80)
+ed_choice = unique(data$education)
+work_choice = unique(data$workclass)
+race_choice = unique(data$race)
+sex_choice = unique(data$sex)
 
 # Define UI for application that draws a histogram
 # Define UI
@@ -75,7 +84,7 @@ ui = navbarPage(
     # First Page 
     tabPanel('Introduction',
              fluidPage(
-                 img(src="uc3mLogo.jpg", align='right'),
+                 img(src="uc3mLogo.jpg", align='right', height=72.8, width=199.7),
                  h1('Shiny App'),
                  h4('By Guillermo Hernandez - Data Tidying 2021'),
                  br(),
@@ -123,7 +132,7 @@ ui = navbarPage(
                      tabPanel('Workclass',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a factor.
+                                  p(HTML(paste0(tags$code('Workclass'), 'is a factor.
                                                Therefore, it is reasonable to use barplots to show it.'))),
                                   p('Differences between groups do not seem that marked. 
                                     Further analysis show that this variable is not that useful itself to distinguish the income.')
@@ -150,7 +159,7 @@ ui = navbarPage(
                      tabPanel('Race',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a factor.
+                                  p(HTML(paste0(tags$code('Race'), 'is a factor.
                                                Therefore, it is reasonable to use barplots to show it.'))),
                                   p('There is a great imbalance in sample size between classes. 
                                     However, it can be seen that white people are more likely to have high incomes.')
@@ -164,7 +173,7 @@ ui = navbarPage(
                      tabPanel('Sex',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a (dichotomic) factor.
+                                  p(HTML(paste0(tags$code('Sex'), 'is a (dichotomic) factor.
                                                Therefore, it is reasonable to use barplots to show it.'))),
                                   p('The salary abysm between males and females becomes clear in this chart.
                                     Women tend to occupy lower-rank positions in companies, which might partially explain this phenomenon.')
@@ -178,8 +187,10 @@ ui = navbarPage(
                      tabPanel('Hours per Week',
                           sidebarLayout(
                               sidebarPanel(
-                                  p(HTML(paste0(tags$code('Age'), 'is a continuous (or almost) variable.
-                                               Therefore, it is better to display it through a kernel density distribution.'))),
+                                  p(HTML(paste0(tags$code('Hours per Week'), 'is supposed to be a continuous variable. In practice, it is not entirely, as there are discrete worktimes.
+                                               However, a kernel distribution allows to see just the necessary amount of information.'))),
+                                  p('As expected, longer workdays are better paid and therefore chances of high incomes are greater.
+                                    At least, few hours per week are very difficult to be payed over 50K.')
                                   
                               ),#sidebarPanel
                               mainPanel(
@@ -190,6 +201,34 @@ ui = navbarPage(
                     ) #HoursWeek
                  ) #tabsetPanel
              )#fluidPage    
+    ),#tabPanel
+    tabPanel('predict your Income Class',
+             fluidPage(
+               h1('What is your income?'),
+               p('In this page you can select your attributes to check if you would be a potential 50K+ earner or not!'),
+               sidebarLayout(
+                 sidebarPanel = (
+                   # sliderTextInput( #Age
+                   #   inputId = "AgeSel",
+                   #   label = "Age", 
+                   #   choices = age_choice,
+                   #   grid = TRUE),
+                   # sliderTextInput( #Hours
+                   #   inputId = "HourSel",
+                   #   label = "Hours per Week", 
+                   #   choices = hours_choice,
+                   #   grid = TRUE),
+                   prettyRadioButtons( #Sex
+                     inputId = "SexSel",
+                     label = "Sex", 
+                     choices = sex_choice,
+                     inline = TRUE,
+                     choiceNames = list('Male', 'Female')
+                   )
+                 ), #sidebar
+                 mainPanel()
+               )#sidebarLayout
+             )#fluidPage
     )#tabPanel
 )#navbarPage
 
