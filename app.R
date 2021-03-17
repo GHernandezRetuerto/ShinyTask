@@ -12,7 +12,7 @@ require(plotly)
 require(DT)
 require(shinyWidgets)
 
-data =  read.csv(url('https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'), header=FALSE, stringsAsFactors = TRUE, sep=',')
+data =  read.csv(url('https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'), header=FALSE, sep=',')
 colnames(data) = c('age','workclass','fnlwgt','education','education_num','marital_status','occupation','relationship','race','sex','cap_gain','cap_loss','hours_week','native_country','label')
 
 # Some cleaning and selection of variables
@@ -39,7 +39,7 @@ levels(data$workclass) = c(levels(data$workclass), "Public", "Self Employed")
 data$workclass = gsub('.*^\\ Self.*', 'Self Employed', data$workclass)
 data$workclass = gsub('.*\\gov$.*', 'Public', data$workclass)
 data$workclass = gsub('.*\\pay$.*', 'Without Pay', data$workclass)
-data$workclass = factor(data$workclass, levels = c(' Private', 'Public', 'Self Employed', 'Without Pay'))
+#data$workclass = factor(data$workclass, levels = c(' Private', 'Public', 'Self Employed', 'Without Pay'))
 
 #Modification of 'education'
 levels(data$education) = c(levels(data$education), "Elementary school", "Middle School", "High School",'Unfinnished College')
@@ -53,12 +53,19 @@ data$education = gsub(' 12th', 'High School', data$education)
 data$education = gsub(' Some-college', 'Unfinnished College', data$education)
 data$education = gsub(' Assoc-voc', 'Assoc', data$education)
 data$education = gsub(' Assoc-acdm', 'Assoc', data$education)
-data$education = factor(data$education)
-data$education = ordered(data$education, levels = c(' Preschool','Elementary School','Middle School','High School',' HS-grad',' Prof-school','Assoc','Unfinnished College',' Bachelors',' Masters',' Doctorate'))  
+#data$education = factor(data$education)
+#data$education = ordered(data$education, levels = c(' Preschool','Elementary School','Middle School','High School',' HS-grad',' Prof-school','Assoc','Unfinnished College',' Bachelors',' Masters',' Doctorate'))  
 
 # Modification of 'race'
 data$race = gsub(' Amer-Indian-Eskimo', 'Ind-Eskimo', data$race)
 data$race = gsub(' Asian-Pac-Islander', 'Asian-Pac', data$race)
+
+#data$sex = factor(data$sex, levels = c(' Male', ' Female'))
+
+data = data[complete.cases(data), ]
+
+label_binary = ifelse(data$label == ' >50K', 1, 0)
+data = cbind(data, label_binary)
 
 # RF Model for income prediction
 rfModel = readRDS('www\\rfModel.rds')
@@ -66,11 +73,18 @@ rfModel = readRDS('www\\rfModel.rds')
 # Choice vectors
 label_choice = unique(data$label)
 age_choice = c(15,25,35,45,55,65,75,90)
-hours_choice = c(10, 20, 30, 40, 60, 80)
+hours_choice = c(10,20,30,40,60,80)
 ed_choice = unique(data$education)
 work_choice = unique(data$workclass)
 race_choice = unique(data$race)
 sex_choice = unique(data$sex)
+
+names(sex_choice) = unique(sex_choice)
+names(hours_choice) = unique(hours_choice)
+names(ed_choice) = unique(ed_choice)
+names(work_choice) = unique(work_choice)
+names(race_choice) = unique(race_choice)
+
 
 # Define UI for application that draws a histogram
 # Define UI
@@ -202,31 +216,51 @@ ui = navbarPage(
                  ) #tabsetPanel
              )#fluidPage    
     ),#tabPanel
-    tabPanel('predict your Income Class',
+    tabPanel('Predict your Income Class',
              fluidPage(
                h1('What is your income?'),
                p('In this page you can select your attributes to check if you would be a potential 50K+ earner or not!'),
                sidebarLayout(
-                 sidebarPanel = (
-                   # sliderTextInput( #Age
-                   #   inputId = "AgeSel",
-                   #   label = "Age", 
-                   #   choices = age_choice,
-                   #   grid = TRUE),
-                   # sliderTextInput( #Hours
-                   #   inputId = "HourSel",
-                   #   label = "Hours per Week", 
-                   #   choices = hours_choice,
-                   #   grid = TRUE),
+                 sidebarPanel(
+                   sliderTextInput( #Age
+                     inputId = "AgeSel",
+                     label = "Age",
+                     choices = age_choice,
+                     grid = TRUE),
+                   sliderTextInput( #Hours
+                     inputId = "HourSel",
+                     label = "Hours per Week",
+                     choices = hours_choice,
+                     grid = TRUE),
                    prettyRadioButtons( #Sex
                      inputId = "SexSel",
                      label = "Sex", 
                      choices = sex_choice,
-                     inline = TRUE,
-                     choiceNames = list('Male', 'Female')
+                     inline = TRUE
+                   ),
+                   pickerInput(
+                     inputId = "WorkSel",
+                     label = "Workclass", 
+                     choices = work_choice,
+                     multiple = FALSE
+                   ),
+                   pickerInput(
+                     inputId = "EdSel",
+                     label = "Educational Level", 
+                     choices = ed_choice,
+                     multiple = FALSE
+                   ),
+                   pickerInput(
+                     inputId = "RaceSel",
+                     label = "Race", 
+                     choices = race_choice,
+                     multiple = FALSE
                    )
                  ), #sidebar
-                 mainPanel()
+                 mainPanel(
+                   textOutput('PredResultText'),
+                   tableOutput('Table')
+                 )
                )#sidebarLayout
              )#fluidPage
     )#tabPanel
@@ -237,6 +271,13 @@ server = function(input, output) {
     # Selector of populations in Variable Plots
     labelSelection = reactive({data %>%
             filter(label %in% input$label_sel)})
+    
+    predSelection = reactive({data.frame('age' = input$AgeSel,
+                                         'workclass' = input$WorkSel,
+                                         'education' = input$EdSel,
+                                         'race' = input$RaceSel,
+                                         'sex' = input$SexSel,
+                                         'hours_week' = input$HoursSel)})
     
     # Variable Plot Renderers
     output$AgePlot = renderPlot(
@@ -298,6 +339,19 @@ server = function(input, output) {
             theme_minimal()+
             labs(title = "Race barplot by label" , x = 'Hours/Week Worked', y = 'Density')
     ) #RacePlot
+    
+    output$PredResultText = renderText(
+      ifelse(predict(glm(label_binary~age+workclass+education+race+sex+hours_week, data=data, family=binomial), 
+                     newdata = data.frame('age'       = input$AgeSel,
+                                         'workclass'  = input$WorkSel,
+                                         'education'  = input$EdSel,
+                                         'race'       = input$RaceSel,
+                                         'sex'        = input$SexSel,
+                                         'hours_week' = input$HoursSel), 
+                     type="response") < 0.5, 'You are predicted to earn LESS than 50K', 'You are predicted to earn MORE than 50K')
+    )
+    
+    output$Table = renderTable(predSelection)
 }
 
 # Run the application 
