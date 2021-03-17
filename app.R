@@ -381,7 +381,7 @@ server = function(input, output) {
         file.copy("report.Rmd", tempReport, overwrite = TRUE)
         
         params = list(
-          label = isolate(input$n_sample), 
+          label = isolate(input$label_sel), 
           age = isolate(input$AgeSel),
           work = isolate(input$WorkSel),
           ed = isolate(input$EdSel),

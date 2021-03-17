@@ -79,7 +79,8 @@ dataPred$label = ifelse(data$label == ' >50K', 1, 0)
 # The Variables:
 
 ```{r echo=FALSE}
-data = data %>% filter(label %in% params$label)
+labs = c(params$label)
+data = data %>% filter(label %in% labs)
 
 ageplot = ggplot(data, aes(age, fill = label)) +
   geom_density(alpha = 0.5, kernel = "gaussian") +
@@ -129,6 +130,7 @@ ggplotly(edplot)
 ggplotly(workplot)
 ggplotly(sexplot)
 ggplotly(raceplot)
+
 ```
 
 
