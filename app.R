@@ -4,6 +4,7 @@ require(bslib)
 require(thematic)
 #data handling
 require(tidyverse)
+require(readr)
 #plotting
 require(ggplot2)
 library(ggpubr)
@@ -29,9 +30,9 @@ NAcount = function(vector){
 }
 if (sum(sapply(data, NAcount)) != 0){cat('ERROR: NAs detected.')}
 
-# Just for quicker processing: removal of 70% of the data. I would not do this in a real application.
+# Just for quicker processing: removal of 30% of the data. I would not do this in a real application.
 library(caret)
-part = createDataPartition(data$label, p=0.3, list=FALSE)
+part = createDataPartition(data$label, p=0.7, list=FALSE)
 data = data[part,]
 
 #Modification of 'workclass'
@@ -64,23 +65,23 @@ data$race = gsub(' Asian-Pac-Islander', 'Asian-Pac', data$race)
 
 data = data[complete.cases(data), ]
 
-label_binary = ifelse(data$label == ' >50K', 1, 0)
-data = cbind(data, label_binary)
+dataPred = data %>% select(-label)
+dataPred$label = ifelse(data$label == ' >50K', 1, 0)
 
-# RF Model for income prediction
-rfModel = readRDS('www\\rfModel.rds')
+
+# Failed attempt to have an external model for the label predction.
+# rfModel = read_rds('rfModel.rds')
 
 # Choice vectors
-label_choice = unique(data$label)
+label_choice = as.vector(unique(data$label))
 age_choice = c(15,25,35,45,55,65,75,90)
 hours_choice = c(10,20,30,40,60,80)
-ed_choice = unique(data$education)
-work_choice = unique(data$workclass)
-race_choice = unique(data$race)
-sex_choice = unique(data$sex)
+ed_choice = as.vector(unique(data$education))
+work_choice = as.vector(unique(data$workclass))
+race_choice = as.vector(unique(data$race))
+sex_choice = as.vector(unique(data$sex))
 
 names(sex_choice) = unique(sex_choice)
-names(hours_choice) = unique(hours_choice)
 names(ed_choice) = unique(ed_choice)
 names(work_choice) = unique(work_choice)
 names(race_choice) = unique(race_choice)
@@ -92,7 +93,7 @@ ui = navbarPage(
     theme = bs_theme(version = 4, bootswatch = "yeti"),#theme
     
     # Application title
-    titlePanel("Shiny App"
+    titlePanel("Adult Income"
     ),
     
     # First Page 
@@ -258,12 +259,34 @@ ui = navbarPage(
                    )
                  ), #sidebar
                  mainPanel(
-                   textOutput('PredResultText'),
-                   tableOutput('Table')
+                   br(),
+                   br(),
+                   textOutput('Prediction'),
+                   tags$head(tags$style("#Prediction{color: black;
+                                 font-size: 40px;
+                                 font-style: bold;
+                                 }"))
+                   # conditionalPanel(
+                   #   condition = 'output.Prediction == 0',
+                   #   p('It seems like you eran less than 50K...'),
+                   #   img(src="nomoney.jpg", align='right', width=500)
+                   # ),
+                   # conditionalPanel(
+                   #   condition = 'output.Prediction == 1',
+                   #   p('You probably eran more than 50K a year, congratulations!'),
+                   #   img(src="money.jpg", align='right', width=500)
+                   # )
                  )
                )#sidebarLayout
              )#fluidPage
-    )#tabPanel
+    ),#tabPanel
+    tabPanel('Generate a Report',
+            fluidPage(
+              p('Click on the button below to generate a report with dynamic Plotly graphs and the prediction you obtained.'),
+              br(),
+              downloadButton("report", "Generate report")
+            )#fluidpage
+    ) #tabpanel
 )#navbarPage
 
 # Define server logic required to draw a histogram
@@ -340,18 +363,39 @@ server = function(input, output) {
             labs(title = "Race barplot by label" , x = 'Hours/Week Worked', y = 'Density')
     ) #RacePlot
     
-    output$PredResultText = renderText(
-      ifelse(predict(glm(label_binary~age+workclass+education+race+sex+hours_week, data=data, family=binomial), 
+    output$Prediction = renderText(
+      ifelse(predict(glm(label~age+workclass+education+race+sex+hours_week, data=dataPred, family=binomial), 
                      newdata = data.frame('age'       = input$AgeSel,
                                          'workclass'  = input$WorkSel,
                                          'education'  = input$EdSel,
                                          'race'       = input$RaceSel,
                                          'sex'        = input$SexSel,
-                                         'hours_week' = input$HoursSel), 
-                     type="response") < 0.5, 'You are predicted to earn LESS than 50K', 'You are predicted to earn MORE than 50K')
-    )
+                                         'hours_week' = input$HourSel), 
+                     type="response") < 0.5, 'It seems like you eran less than 50K...', 'You probably eran more than 50K a year, congratulations!') #ifelse
+    ) #Prediction
     
-    output$Table = renderTable(predSelection)
+    output$report = downloadHandler(
+      filename = "report.html",
+      content = function(file) {
+        tempReport = file.path(tempdir(), "report.Rmd")
+        file.copy("report.Rmd", tempReport, overwrite = TRUE)
+        
+        params = list(
+          label = isolate(input$n_sample), 
+          age = isolate(input$AgeSel),
+          work = isolate(input$WorkSel),
+          ed = isolate(input$EdSel),
+          race = isolate(input$RaceSel),
+          sex = isolate(input$SexSel),
+          hours = isolate(input$HourSel)
+        )
+        
+        rmarkdown::render(tempReport, output_file = file,
+                          params = params,
+                          envir = new.env(parent = globalenv())
+        )
+      }
+    )
 }
 
 # Run the application 
