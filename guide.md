@@ -17,7 +17,7 @@ There is also a report generator in other tab: it will return a HTML file with y
 
 # Bugs
 
-Fortunately, the app seems bug-free as it is today!
+Fortunately, the app seems bug-free as it is today! Just one thing that is a bit annoying is that the color of the plots will always be red if only one label is selected, istead of always keeping the same color for each class. For sure there is a way around this, but I did not find it.
 
 # References
 
